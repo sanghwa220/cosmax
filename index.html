@@ -1,0 +1,1369 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AESTURA · 브랜드 제품 라인업 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-elev: #141821;
+    --bg-elev-2: #1c2230;
+    --border: #262d3d;
+    --border-strong: #384155;
+    --text: #e8ecf4;
+    --text-dim: #98a2b8;
+    --text-faint: #626d84;
+    --accent: #7c9cff;
+    --accent-soft: rgba(124, 156, 255, 0.14);
+    --gold: #d9b779;
+    --radius: 16px;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+    font-family: "Noto Sans KR", -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    word-break: keep-all;
+  }
+
+  /* ---------- Cursor-following neon glow ---------- */
+  #cursor-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      circle,
+      rgba(168, 85, 247, 0.32) 0%,
+      rgba(124, 92, 255, 0.16) 40%,
+      rgba(124, 92, 255, 0.04) 62%,
+      transparent 70%
+    );
+    filter: blur(20px);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    mix-blend-mode: screen;
+    will-change: transform;
+  }
+  .wrap { position: relative; z-index: 1; }
+  @media (prefers-reduced-motion: reduce) { #cursor-glow { display: none; } }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(124, 156, 255, 0.10), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* ---------- Header / Search ---------- */
+  header {
+    padding: 56px 0 28px;
+    text-align: center;
+  }
+
+  .brand-mark {
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1.logo {
+    font-size: clamp(32px, 6vw, 54px);
+    font-weight: 900;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    background: linear-gradient(90deg, #fff 20%, var(--accent) 120%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+
+  .subtitle { color: var(--text-dim); font-size: clamp(14px, 2.4vw, 16px); margin-bottom: 34px; }
+
+  .search-shell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 8px 6px 22px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-shell:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow);
+  }
+  .search-shell svg { flex: none; opacity: 0.6; }
+  #search {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 17px;
+    padding: 14px 0;
+  }
+  #search::placeholder { color: var(--text-faint); }
+  .search-btn {
+    flex: none;
+    background: var(--accent);
+    color: #0b0d12;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 26px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.05s;
+  }
+  .search-btn:hover { filter: brightness(1.08); }
+  .search-btn:active { transform: scale(0.97); }
+
+  .hint {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+  .hint b { color: var(--accent); font-weight: 600; cursor: pointer; }
+  .hint b:hover { text-decoration: underline; }
+
+  /* ---------- Filter Bar ---------- */
+  .filters {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 22px 0 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 34px;
+  }
+  .filters.show { display: flex; }
+
+  .filter-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .filter-label {
+    flex: none;
+    width: 64px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+  .chip {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .chip.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ---------- Stats strip ---------- */
+  .stats {
+    display: none;
+    gap: 14px;
+    margin: 26px 0 10px;
+    flex-wrap: wrap;
+  }
+  .stats.show { display: flex; }
+  .stat {
+    flex: 1;
+    min-width: 150px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .stat .num { font-size: 26px; font-weight: 800; }
+  .stat .num.gold { color: var(--gold); }
+  .stat .lbl { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .stats-line {
+    display: none;               /* 데스크톱: 숨김, 모바일에서만 표시 */
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 14px 2px 2px;
+  }
+  .stats-line b { color: var(--text); font-weight: 700; }
+  .stats-line b.gold-t { color: var(--gold); }
+
+  /* ---------- Grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+    margin-top: 26px;
+  }
+
+  .card {
+    perspective: 1400px;
+    height: 340px;
+    cursor: pointer;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  /* Front */
+  .front {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elev);
+  }
+  .front .thumb {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    position: relative;
+  }
+  .front .thumb::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.35));
+  }
+
+  /* 브랜드 워드마크 (투명 배경, 색깔칩 위에 얹힘) — 재현 로고 */
+  .wordmark {
+    position: relative;
+    z-index: 2;
+    color: #ffffff;
+    text-align: center;
+    line-height: 1.1;
+    padding: 0 10px;
+    max-width: 100%;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.35);
+    user-select: none;
+  }
+  .wm-aestura    { font-family: "Segoe UI", Arial, sans-serif; font-weight: 500; font-size: 26px; letter-spacing: 0.42em; text-indent: 0.42em; }
+  .wm-bringgreen { font-family: "Segoe UI", Arial, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: 0.01em; }
+  .wm-zeroid     { font-family: "Segoe UI", Arial, sans-serif; font-weight: 700; font-size: 27px; letter-spacing: 0.20em; text-indent: 0.20em; }
+  .wm-espoir     { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-weight: 700; font-size: 33px; }
+  .wm-hera       { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: 30px; letter-spacing: 0.32em; text-indent: 0.32em; }
+  .wm-romand     { font-family: "Segoe UI", Arial, sans-serif; font-weight: 300; font-size: 31px; letter-spacing: 0.01em; }
+  .wm-3ce .wm-text { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .wm-3ce .big   { font-family: "Segoe UI", Arial, sans-serif; font-weight: 800; font-size: 30px; letter-spacing: 0.08em; text-indent: 0.08em; }
+  .wm-3ce .sub   { font-family: "Segoe UI", Arial, sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.34em; text-indent: 0.34em; opacity: 0.95; }
+
+  /* 실제 로고 이미지 (있을 때만 표시, 없으면 위 텍스트 워드마크 폴백) */
+  .brand-logo { display: none; max-width: 84%; max-height: 64px; object-fit: contain; }
+  .wordmark.has-logo .brand-logo { display: block; margin: 0 auto; }
+  .wordmark.has-logo .wm-text { display: none; }
+
+  /* 워드마크가 있는 카드: 이모지는 작은 코너 마크로 */
+  .front .thumb.has-mark .thumb-emoji {
+    position: absolute;
+    top: 12px; right: 14px;
+    font-size: 24px;
+    opacity: 0.92;
+  }
+  .badge-cat {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 999px;
+    z-index: 2;
+  }
+  .front .info {
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+  .front .line { font-size: 11px; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
+  .front .name { font-size: 16px; font-weight: 700; margin: 4px 0 6px; }
+  .front .price { font-size: 15px; color: var(--text); font-weight: 600; }
+  .front .flip-hint { font-size: 11px; color: var(--text-faint); margin-top: 8px; }
+
+  /* Back */
+  .back {
+    transform: rotateY(180deg);
+    background: var(--bg-elev-2);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .back h3 { font-size: 16px; margin-bottom: 2px; }
+  .back .sub { font-size: 11px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+  .spec { display: flex; gap: 8px; font-size: 12.5px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .spec .k { color: var(--text-faint); flex: none; width: 62px; }
+  .spec .v { color: var(--text); }
+  .insight {
+    margin-top: auto;
+    padding-top: 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .insight .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+  .edit-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .edit-actions button {
+    flex: 1;
+    font-family: inherit; font-size: 12px; padding: 7px 0;
+    border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-elev); color: var(--text-dim);
+    transition: all 0.15s;
+  }
+  .edit-actions .edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .edit-actions .del-btn:hover { border-color: #ff7a85; color: #ff7a85; }
+  .trend-up { color: #5ad19a; font-weight: 700; }
+  .trend-down { color: #ff7a85; font-weight: 700; }
+
+  .empty {
+    text-align: center;
+    color: var(--text-faint);
+    padding: 80px 0;
+    font-size: 15px;
+    display: none;
+  }
+  .empty.show { display: block; }
+
+  /* ---------- 비교 모드 ---------- */
+  .compare-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 5;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border-strong);
+    color: #fff;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .compare-btn:hover { border-color: var(--accent); }
+  .compare-btn.on {
+    background: var(--accent);
+    color: #0b0d12;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  .compare-tray {
+    position: fixed;
+    left: 50%; bottom: 20px;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 10px 12px 10px 20px;
+    box-shadow: var(--shadow);
+    z-index: 50;
+    max-width: calc(100% - 32px);
+  }
+  .compare-tray.show { display: flex; }
+  .compare-tray .label { font-size: 13px; color: var(--text-dim); flex: none; }
+  .compare-chips { display: flex; gap: 6px; overflow-x: auto; }
+  .cchip {
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 10px 5px 12px;
+    font-size: 12px;
+  }
+  .cchip .x { cursor: pointer; color: var(--text-faint); font-weight: 700; }
+  .cchip .x:hover { color: #ff7a85; }
+  .compare-tray .go {
+    flex: none;
+    background: var(--accent); color: #0b0d12;
+    border: none; border-radius: 999px;
+    padding: 9px 18px; font-family: inherit; font-weight: 700; font-size: 13px;
+    cursor: pointer;
+  }
+  .compare-tray .go:disabled { opacity: 0.4; cursor: not-allowed; }
+  .compare-tray .clear {
+    flex: none; background: none; border: none;
+    color: var(--text-faint); font-family: inherit; font-size: 12px; cursor: pointer;
+  }
+  .compare-tray .clear:hover { color: var(--text); }
+
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.62);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    max-width: 980px; width: 100%;
+    max-height: 88vh; overflow: auto;
+    box-shadow: var(--shadow);
+  }
+  .modal-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 22px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg-elev); z-index: 2;
+  }
+  .modal-head h2 { font-size: 18px; }
+  .modal-close { background: none; border: none; color: var(--text-dim); font-size: 24px; line-height: 1; cursor: pointer; }
+  .modal-close:hover { color: var(--text); }
+  .cmp-table-wrap { overflow-x: auto; padding: 8px 22px 24px; }
+  .cmp-table { border-collapse: collapse; width: 100%; min-width: 520px; }
+  .cmp-table th, .cmp-table td {
+    text-align: left; padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px; vertical-align: top; line-height: 1.5;
+  }
+  .cmp-table .rowkey { color: var(--text-faint); font-size: 12px; white-space: nowrap; width: 92px; }
+  .cmp-prod-head .emoji { font-size: 26px; }
+  .cmp-prod-head .bd { font-size: 11px; color: var(--gold); letter-spacing: 1px; margin-top: 4px; }
+  .cmp-prod-head .nm { font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .cmp-table td.best { color: #5ad19a; font-weight: 700; }
+  .cmp-table td.best .badge { font-size: 11px; opacity: 0.85; }
+
+  /* ---------- 빈 상태 데이터 입력 ---------- */
+  .empty-cta { margin-top: 18px; }
+  .add-data-btn {
+    background: var(--accent); color: #0b0d12;
+    border: none; border-radius: 999px;
+    padding: 11px 22px; font-family: inherit; font-weight: 700; font-size: 14px;
+    cursor: pointer; transition: filter 0.15s;
+  }
+  .add-data-btn:hover { filter: brightness(1.08); }
+
+  .add-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; text-align: left; }
+  .add-form label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-dim); }
+  .add-form label.wide { grid-column: 1 / -1; }
+  .add-form input, .add-form select, .add-form textarea {
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 11px; color: var(--text);
+    font-family: inherit; font-size: 14px; outline: none;
+  }
+  .add-form input:focus, .add-form select:focus, .add-form textarea:focus { border-color: var(--accent); }
+  .add-form textarea { resize: vertical; }
+  .add-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 4px; }
+  .add-actions .go {
+    background: var(--accent); color: #0b0d12; border: none; border-radius: 999px;
+    padding: 10px 24px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+
+  footer { text-align: center; color: var(--text-faint); font-size: 12px; margin-top: 50px; }
+
+  /* ---------- 모바일: 최소 가독 크기 보정 ---------- */
+  @media (max-width: 600px) {
+    body { font-size: 15px; }
+    #search { font-size: 16px; }              /* iOS 자동 확대 방지 최소값 */
+    .front .name { font-size: 15px; }
+    .front .price { font-size: 15px; }
+    .front .line, .badge-cat, .front .flip-hint { font-size: 12px; }
+    .back { font-size: 13px; }
+    .spec { font-size: 13px; }
+    .spec .k { width: 58px; }
+    .insight, .insight .tag { font-size: 12.5px; }
+
+    /* 통계: 박스 대신 한 줄 요약 */
+    .stats.show { display: none; }
+    .stats-line { display: block; }
+
+    /* 필터 영역 촘촘하게 */
+    .filters { gap: 10px; padding-top: 18px; margin-top: 24px; }
+    .filter-group { gap: 6px; }
+    .filter-label {
+      width: 100%;
+      margin: 0 0 2px;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+    }
+    .chip { font-size: 13px; padding: 6px 12px; }
+    .add-form { grid-template-columns: 1fr; }
+
+    /* 제품 카드: 컴팩트 가로 박스 + 왼쪽 색상 인덱스 */
+    .grid { grid-template-columns: 1fr; gap: 10px; margin-top: 18px; }
+
+    /* 모바일에선 3D 플립 대신 앞/뒤 전환 → 카드가 내용만큼 펼쳐짐 */
+    .card { height: auto; perspective: none; }
+    .card-inner { transform: none !important; transform-style: flat; height: auto; }
+    .face {
+      position: relative;
+      backface-visibility: visible;
+      -webkit-backface-visibility: visible;
+      transform: none;
+    }
+    .back { display: none; overflow: visible; }
+    .card.flipped .front { display: none; }
+    .card.flipped .back { display: flex; }
+
+    .front { flex-direction: row; min-height: 96px; }
+    .front .thumb { display: none; }              /* 상단 색깔 영역 제거 */
+    .front .info {
+      flex: 1;
+      border-top: none;
+      border-left: 7px solid var(--cat, var(--accent));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 12px 16px;
+    }
+    .front .name { margin: 2px 0 4px; }
+    .front .flip-hint { display: none; }
+    .back {
+      border-left: 7px solid var(--cat, var(--accent));
+      padding: 12px 14px;
+    }
+    .back h3 { font-size: 14px; }
+    .back .sub { margin-bottom: 8px; }
+    .spec { padding: 4px 0; }
+  }
+</style>
+
+<div id="cursor-glow"></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand-mark">Cosmetics Brand Dashboard</div>
+    <h1 class="logo">제품 라인업 탐색</h1>
+    <p class="subtitle">브랜드명을 검색하면 카테고리별 · 라인업별 제품을 한눈에 볼 수 있어요</p>
+
+    <div class="search-shell">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input id="search" type="text" placeholder="브랜드명을 입력하세요  (예: aestura)" autocomplete="off" />
+      <button class="search-btn" id="searchBtn">검색</button>
+    </div>
+    <p class="hint">지금 등록된 브랜드:
+      <b data-brand="">전체</b> ·
+      <b data-brand="aestura">AESTURA</b> ·
+      <b data-brand="bringgreen">BRINGGREEN</b> ·
+      <b data-brand="zeroid">ZEROID</b> ·
+      <b data-brand="espoir">ESPOIR</b> ·
+      <b data-brand="3ce">3CE</b> ·
+      <b data-brand="hera">HERA</b> ·
+      <b data-brand="romand">ROMAND</b>
+    </p>
+  </header>
+
+  <div class="filters" id="filters">
+    <div class="filter-group" id="catGroup">
+      <span class="filter-label">카테고리</span>
+    </div>
+    <div class="filter-group" id="lineGroup">
+      <span class="filter-label">라인업</span>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+  <div class="stats-line" id="statsLine"></div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">해당 브랜드의 데이터를 찾을 수 없습니다. <br />‘aestura’ 를 검색해보세요.</div>
+
+  <footer>AESTURA Demo Dashboard · 데이터는 데모용 가짜 데이터입니다</footer>
+</div>
+
+<div class="compare-tray" id="tray">
+  <span class="label">비교함</span>
+  <div class="compare-chips" id="trayChips"></div>
+  <button class="go" id="cmpGo" disabled>비교하기</button>
+  <button class="clear" id="cmpClear">해제</button>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>제품 비교</h2>
+      <button class="modal-close" id="modalClose" aria-label="닫기">×</button>
+    </div>
+    <div class="cmp-table-wrap" id="cmpBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addModal">
+  <div class="modal" style="max-width: 540px;">
+    <div class="modal-head">
+      <h2 id="addTitle">데이터 입력</h2>
+      <button class="modal-close" id="addClose" aria-label="닫기">×</button>
+    </div>
+    <div style="padding: 18px 22px 24px;">
+      <form id="addForm" class="add-form">
+        <label>브랜드<input name="brand" required /></label>
+        <label>제품명<input name="pname" required /></label>
+        <label>카테고리
+          <select name="cat" id="catSelect">
+            <option>스킨케어</option>
+            <option>메이크업</option>
+            <option>클렌징</option>
+            <option>선케어</option>
+            <option value="__custom__">+ 직접 입력하기…</option>
+          </select>
+          <input name="catCustom" id="catCustom" placeholder="새 카테고리명 입력" style="display:none; margin-top:8px;" />
+        </label>
+        <label>라인업<input name="line" placeholder="예: Aqua Line" /></label>
+        <label>가격<input name="price" placeholder="예: 25,000원" /></label>
+        <label>용량<input name="volume" placeholder="예: 50ml" /></label>
+        <label>이모지<input name="emoji" placeholder="예: 🧴" maxlength="4" /></label>
+        <label>매출 증감<input name="rate" placeholder="예: +12% 또는 -5%" /></label>
+        <label class="wide">핵심성분<input name="ingredient" placeholder="예: 히알루론산, 판테놀" /></label>
+        <label>제형<input name="texture" placeholder="예: 촉촉한 젤" /></label>
+        <label>기능성<input name="func" placeholder="예: 보습 · 진정" /></label>
+        <label class="wide">매출 인사이트<textarea name="text" rows="2" placeholder="예: 재구매율 높음..."></textarea></label>
+        <div class="add-actions"><button type="submit" class="go">추가하기</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DEMO DATA  —  브랜드: aestura (가짜 데이터)
+   ============================================================ */
+/* 카테고리별 카드 색상 (같은 분류 = 같은 색) */
+const CAT_GRAD = {
+  "스킨케어": "linear-gradient(145deg,#6aa8a8,#9BD4D4)",
+  "메이크업": "linear-gradient(145deg,#b07d75,#D4A39B)",
+  "클렌징":   "linear-gradient(145deg,#6f5f82,#9C89B0)",
+  "선케어":   "linear-gradient(145deg,#c48a63,#E6AF8A)",
+};
+const catGrad = (cat) => CAT_GRAD[cat] || "linear-gradient(145deg,#3a4155,#5a6480)";
+
+/* 카테고리 단색 (모바일 왼쪽 색상 인덱스용) */
+const CAT_COLOR = {
+  "스킨케어": "#9BD4D4",
+  "메이크업": "#D4A39B",
+  "클렌징":   "#9C89B0",
+  "선케어":   "#E6AF8A",
+};
+const catColor = (cat) => CAT_COLOR[cat] || "#5a6480";
+
+/* 브랜드별 워드마크 (재현 로고) — 해당 브랜드 카드 색깔칩 위에 표시 */
+const BRAND_MARK = {
+  aestura:    { cls: "wm-aestura",    html: "AESTURA" },
+  bringgreen: { cls: "wm-bringgreen", html: "&raquo;&raquo; BRINGGREEN" },
+  zeroid:     { cls: "wm-zeroid",     html: "ZEROID" },
+  espoir:     { cls: "wm-espoir",     html: "espoir" },
+  "3ce":      { cls: "wm-3ce",        html: `<span class="big">3CE</span><span class="sub">STYLENANDA</span>` },
+  hera:       { cls: "wm-hera",       html: "HERA" },
+  romand:     { cls: "wm-romand",     html: "rom&amp;nd" },
+};
+
+const DB = {
+  aestura: [
+    {
+      name: "딥 하이드라 세럼", line: "Aqua Line", cat: "스킨케어", emoji: "💧",
+      grad: "linear-gradient(145deg,#1b3a5b,#4a7fb5)",
+      price: "38,000원", volume: "50ml",
+      ingredient: "히알루론산 5종, 판테놀", texture: "가볍고 촉촉한 워터젤",
+      func: "고보습 · 진정", insight: { rate: "+24%", up: true,
+        text: "리뉴얼 이후 재구매율 <b>62%</b>. 여름 시즌 매출 견인 1위 제품." } },
+    {
+      name: "리프팅 크림", line: "Aqua Line", cat: "스킨케어", emoji: "🫧",
+      grad: "linear-gradient(145deg,#2a4d6e,#6fa8d6)",
+      price: "52,000원", volume: "50ml",
+      ingredient: "펩타이드 콤플렉스, 세라마이드", texture: "리치한 밤 타입",
+      func: "탄력 · 주름개선", insight: { rate: "+11%", up: true,
+        text: "40대 고객 비중 높음. 세트 구매 시 세럼과 <b>번들 전환율 우수</b>." } },
+    {
+      name: "브라이트닝 토너", line: "Glow Line", cat: "스킨케어", emoji: "✨",
+      grad: "linear-gradient(145deg,#5b3a6e,#b58fd6)",
+      price: "29,000원", volume: "200ml",
+      ingredient: "나이아신아마이드 4%, 비타민C 유도체", texture: "산뜻한 액상",
+      func: "미백 · 결정돈", insight: { rate: "-6%", up: false,
+        text: "경쟁사 대비 가격 민감도 높음. <b>프로모션 의존도</b> 개선 필요." } },
+    {
+      name: "쥬시 립밤", line: "Glow Line", cat: "메이크업", emoji: "💄",
+      grad: "linear-gradient(145deg,#7e2f4f,#e07a9d)",
+      price: "18,000원", volume: "3.5g",
+      ingredient: "시어버터, 라즈베리 오일", texture: "촉촉·글로시",
+      func: "보습 · 컬러", insight: { rate: "+41%", up: true,
+        text: "SNS 바이럴 히트. <b>20대 신규 유입</b>의 진입 제품(gateway) 역할." } },
+    {
+      name: "마일드 클렌징 폼", line: "Pure Line", cat: "클렌징", emoji: "🧼",
+      grad: "linear-gradient(145deg,#2f6e5b,#7fd6b8)",
+      price: "22,000원", volume: "150ml",
+      ingredient: "아미노산 계면활성제, 녹차추출물", texture: "부드러운 크림 거품",
+      func: "약산성 세정", insight: { rate: "+8%", up: true,
+        text: "정기구독 상품에 포함되며 <b>안정적 반복매출</b> 확보 중." } },
+    {
+      name: "딥 클렌징 오일", line: "Pure Line", cat: "클렌징", emoji: "🫗",
+      grad: "linear-gradient(145deg,#6e5b2f,#d6c07f)",
+      price: "26,000원", volume: "200ml",
+      ingredient: "올리브 스쿠알란, 호호바 오일", texture: "산뜻하게 씻기는 오일",
+      func: "메이크업 클렌징", insight: { rate: "+3%", up: true,
+        text: "클렌징 폼과 <b>교차구매율 높음</b>. 라인 세트 기획 여지 큼." } },
+    {
+      name: "데일리 선크림 SPF50+", line: "Shield Line", cat: "선케어", emoji: "☀️",
+      grad: "linear-gradient(145deg,#8a6e2f,#e6c766)",
+      price: "24,000원", volume: "50ml",
+      ingredient: "무기자차 필터, 어성초", texture: "백탁 없는 로션",
+      func: "자외선 차단 · 진정", insight: { rate: "+33%", up: true,
+        text: "여름 시즌 <b>카테고리 매출 1위</b>. 톤업 라인 확장 검토 중." } },
+    {
+      name: "톤업 선스틱", line: "Shield Line", cat: "선케어", emoji: "🖊️",
+      grad: "linear-gradient(145deg,#8a4a2f,#e69a66)",
+      price: "21,000원", volume: "18g",
+      ingredient: "혼합자차, 콜라겐", texture: "매트하게 발리는 스틱",
+      func: "자외선 차단 · 톤업", insight: { rate: "+17%", up: true,
+        text: "휴대성 강점으로 <b>재구매·선물 수요</b> 증가세." } },
+    {
+      name: "글로우 쿠션", line: "Glow Line", cat: "메이크업", emoji: "🪞",
+      grad: "linear-gradient(145deg,#6e2f5b,#d67fb8)",
+      price: "34,000원", volume: "15g",
+      ingredient: "히알루론산, 진주추출물", texture: "촉촉한 글로우 커버",
+      func: "커버 · 광채", insight: { rate: "-2%", up: false,
+        text: "리필 판매 비중 낮음. <b>리필 캠페인</b>으로 객단가 개선 여지." } },
+    {
+      name: "수딩 마스크팩", line: "Aqua Line", cat: "스킨케어", emoji: "🧖",
+      grad: "linear-gradient(145deg,#2f5b6e,#7fbdd6)",
+      price: "3,000원", volume: "25ml",
+      ingredient: "센텔라, 알로에", texture: "촉촉한 에센스 시트",
+      func: "진정 · 보습", insight: { rate: "+52%", up: true,
+        text: "10매 세트 <b>대량구매 전환</b> 활발. 신규고객 미끼상품으로 효과적." } },
+  ],
+
+  bringgreen: [
+    {
+      name: "어성초 진정 토너", line: "어성초", cat: "스킨케어", emoji: "🌿",
+      price: "18,900원", volume: "300ml",
+      ingredient: "어성초추출물 83%, 판테놀", texture: "가볍고 산뜻한 액상",
+      func: "진정 · 트러블케어", insight: { rate: "+31%", up: true,
+        text: "대용량 가성비로 <b>10·20대 재구매율 최상위</b>. 브랜드 시그니처." } },
+    {
+      name: "티트리 시카 세럼", line: "티트리", cat: "스킨케어", emoji: "🍃",
+      price: "21,900원", volume: "50ml",
+      ingredient: "티트리잎수, 마데카소사이드", texture: "산뜻하게 스며드는 세럼",
+      func: "진정 · 피지케어", insight: { rate: "+18%", up: true,
+        text: "지성·트러블 타깃. 토너와 <b>세트 구매 전환</b> 활발." } },
+    {
+      name: "티트리 클렌징 폼", line: "티트리", cat: "클렌징", emoji: "🧼",
+      price: "13,900원", volume: "150ml",
+      ingredient: "티트리추출물, BHA", texture: "쫀쫀한 미세 거품",
+      func: "약산성 · 피지세정", insight: { rate: "+12%", up: true,
+        text: "올리브영 <b>클렌징 카테고리 상위 노출</b>로 유입 견인." } },
+    {
+      name: "어성초 클렌징 오일", line: "어성초", cat: "클렌징", emoji: "🫗",
+      price: "16,900원", volume: "200ml",
+      ingredient: "어성초추출물, 올리브오일", texture: "산뜻하게 씻기는 오일",
+      func: "메이크업 클렌징", insight: { rate: "-2%", up: false,
+        text: "오일 카테고리 인지도 낮음. <b>더블클렌징 기획전</b> 필요." } },
+  ],
+
+  zeroid: [
+    {
+      name: "인텐시브 로션", line: "Intensive", cat: "스킨케어", emoji: "🧴",
+      price: "34,000원", volume: "150ml",
+      ingredient: "MLE 세라마이드, 판테놀", texture: "묵직하게 밀폐되는 로션",
+      func: "장벽강화 · 고보습", insight: { rate: "+26%", up: true,
+        text: "피부과 추천 채널 강세. <b>건성·아토피층 재구매율 높음</b>." } },
+    {
+      name: "리페어 크림", line: "Intensive", cat: "스킨케어", emoji: "🩹",
+      price: "39,000원", volume: "50ml",
+      ingredient: "세라마이드 NP, 콜레스테롤", texture: "리치한 배리어 크림",
+      func: "재생 · 진정", insight: { rate: "+14%", up: true,
+        text: "겨울 시즌 <b>매출 집중</b>. 사계절 수요 확장이 과제." } },
+    {
+      name: "수딩 클렌저", line: "Soothing", cat: "클렌징", emoji: "🫧",
+      price: "22,000원", volume: "200ml",
+      ingredient: "아미노산 계면활성제, 세라마이드", texture: "순한 약산성 젤",
+      func: "저자극 세정", insight: { rate: "+8%", up: true,
+        text: "민감성 세정 니즈로 <b>정기구독 편입</b> 증가." } },
+    {
+      name: "덤 선크림 SPF50+", line: "Shield", cat: "선케어", emoji: "☀️",
+      price: "27,000원", volume: "50ml",
+      ingredient: "혼합자차, 세라마이드", texture: "백탁 적은 로션",
+      func: "자외선 차단 · 장벽케어", insight: { rate: "+21%", up: true,
+        text: "‘예민피부 선크림’ 포지셔닝으로 <b>신규 유입</b> 확대." } },
+  ],
+
+  espoir: [
+    {
+      name: "프로테일러 파운데이션", line: "Pro Tailor", cat: "메이크업", emoji: "🎨",
+      price: "34,000원", volume: "30ml",
+      ingredient: "히알루론산, SPF25", texture: "매트하게 밀착되는 리퀴드",
+      func: "커버 · 지속력", insight: { rate: "+35%", up: true,
+        text: "‘비 글로우’와 함께 <b>파운데이션 매출 쌍두마차</b>." } },
+    {
+      name: "비 글로우 쿠션", line: "Pro Tailor", cat: "메이크업", emoji: "🪞",
+      price: "32,000원", volume: "13g",
+      ingredient: "나이아신아마이드, SPF42", texture: "촉촉한 광채 커버",
+      func: "커버 · 광채", insight: { rate: "+28%", up: true,
+        text: "리필 판매 비중 높아 <b>객단가·재구매 모두 우수</b>." } },
+    {
+      name: "꾸뛰르 립 틴트", line: "Couture", cat: "메이크업", emoji: "💄",
+      price: "17,000원", volume: "5g",
+      ingredient: "호호바 오일, 비타민E", texture: "벨벳 매트",
+      func: "컬러 · 지속", insight: { rate: "+11%", up: true,
+        text: "가을 뮤트톤 컬렉션이 <b>시즌 매출 견인</b>." } },
+    {
+      name: "리얼 아이 팔레트", line: "Couture", cat: "메이크업", emoji: "🎭",
+      price: "36,000원", volume: "8g",
+      ingredient: "진주 펄, 미네랄 파우더", texture: "밀착 고발색 섀도우",
+      func: "발색 · 데일리", insight: { rate: "-5%", up: false,
+        text: "팔레트 단가 부담. <b>단품 섀도우 라인</b> 확장 검토." } },
+    {
+      name: "워터 스플래시 선크림", line: "Sun", cat: "선케어", emoji: "💦",
+      price: "23,000원", volume: "60ml",
+      ingredient: "화학자차, 히알루론산", texture: "물처럼 가벼운 로션",
+      func: "자외선 차단 · 메이크업베이스", insight: { rate: "+16%", up: true,
+        text: "메이크업 전 단계 제품으로 <b>연계 구매</b> 강함." } },
+  ],
+
+  "3ce": [
+    {
+      name: "무드 레시피 립 컬러", line: "Mood Recipe", cat: "메이크업", emoji: "💋",
+      price: "18,000원", volume: "3.5g",
+      ingredient: "시어버터, 마카다미아 오일", texture: "매트 벨벳",
+      func: "컬러 · 지속", insight: { rate: "+42%", up: true,
+        text: "브랜드 시그니처 컬러. <b>글로벌·면세 매출 1위</b>." } },
+    {
+      name: "벨벳 립 틴트", line: "Velvet", cat: "메이크업", emoji: "🍷",
+      price: "16,000원", volume: "4g",
+      ingredient: "카올린, 오일 프리 베이스", texture: "보송한 무광 매트",
+      func: "컬러 · 워터프루프", insight: { rate: "+24%", up: true,
+        text: "SNS 스와치 바이럴로 <b>신규 유입 지속</b>." } },
+    {
+      name: "멀티 아이 컬러 팔레트", line: "Multi Eye", cat: "메이크업", emoji: "🎨",
+      price: "35,000원", volume: "9.5g",
+      ingredient: "실리카, 진주 펄", texture: "부드럽게 뭉개지는 파우더",
+      func: "발색 · 데일리룩", insight: { rate: "+9%", up: true,
+        text: "‘원 팔레트 데일리룩’ 콘텐츠로 <b>연관 판매</b> 확대." } },
+    {
+      name: "블러 프라이머", line: "Face", cat: "메이크업", emoji: "🌫️",
+      price: "22,000원", volume: "30ml",
+      ingredient: "실리카, 나이아신아마이드", texture: "보송한 블러 젤",
+      func: "모공 · 결보정", insight: { rate: "-3%", up: false,
+        text: "베이스 카테고리 인지도 낮음. <b>립·아이와 세트 기획</b> 여지." } },
+  ],
+
+  hera: [
+    {
+      name: "블랙 쿠션", line: "Black", cat: "메이크업", emoji: "🖤",
+      price: "60,000원", volume: "15g",
+      ingredient: "블랙 프로바이오틱스, SPF34", texture: "쫀쫀한 세미매트 커버",
+      func: "커버 · 지속력", insight: { rate: "+30%", up: true,
+        text: "백화점·면세 <b>쿠션 매출 부동의 1위</b>. 브랜드 상징." } },
+    {
+      name: "센슈얼 파우더 매트 립", line: "Sensual", cat: "메이크업", emoji: "💄",
+      price: "42,000원", volume: "3g",
+      ingredient: "미네랄 파우더, 스쿠알란", texture: "파우더리 매트",
+      func: "컬러 · 고급 매트", insight: { rate: "+17%", up: true,
+        text: "‘센슈얼’ 컬러 스토리로 <b>선물 수요</b> 견고." } },
+    {
+      name: "시그니아 아이크림", line: "Signia", cat: "스킨케어", emoji: "💎",
+      price: "180,000원", volume: "25ml",
+      ingredient: "블랙 아이리스, 펩타이드", texture: "리치한 안티에이징 크림",
+      func: "탄력 · 주름개선", insight: { rate: "+8%", up: true,
+        text: "VIP 고객 대상 <b>초고가 라인</b>. 객단가 상승 핵심." } },
+    {
+      name: "선메이트 데이 SPF50+", line: "Sun Mate", cat: "선케어", emoji: "☀️",
+      price: "38,000원", volume: "70ml",
+      ingredient: "혼합자차, 히알루론산", texture: "산뜻한 데일리 로션",
+      func: "자외선 차단 · 보습", insight: { rate: "+13%", up: true,
+        text: "베이스 메이크업과 <b>연계 구매율</b> 높음." } },
+  ],
+
+  romand: [
+    {
+      name: "쥬시 래스팅 틴트", line: "Juicy Lasting", cat: "메이크업", emoji: "🍒",
+      price: "13,000원", volume: "5.5g",
+      ingredient: "과일 추출물, 히알루론산", texture: "촉촉 글로시",
+      func: "컬러 · 지속", insight: { rate: "+55%", up: true,
+        text: "‘과즙 틴트’ 대명사. <b>브랜드 매출 절반 이상</b> 차지." } },
+    {
+      name: "글래스팅 워터 틴트", line: "Glasting", cat: "메이크업", emoji: "💧",
+      price: "12,000원", volume: "4.4g",
+      ingredient: "수분 폴리머, 식물성 오일", texture: "찰랑이는 물광",
+      func: "컬러 · 촉촉", insight: { rate: "+38%", up: true,
+        text: "물광 트렌드 정중앙. <b>10대 신규 유입</b> 진입 제품." } },
+    {
+      name: "베러 댄 팔레트", line: "Better Than", cat: "메이크업", emoji: "🎨",
+      price: "22,000원", volume: "9.5g",
+      ingredient: "미세 펄, 미네랄 파우더", texture: "밀착 데일리 섀도우",
+      func: "발색 · 데일리룩", insight: { rate: "+20%", up: true,
+        text: "‘데일리 원 팔레트’ 포지셔닝으로 <b>스테디셀러화</b>." } },
+    {
+      name: "제로 쿠션", line: "Zero", cat: "메이크업", emoji: "🪞",
+      price: "19,000원", volume: "14g",
+      ingredient: "나이아신아마이드, SPF40", texture: "얇게 밀착되는 매트",
+      func: "커버 · 톤보정", insight: { rate: "-4%", up: false,
+        text: "쿠션 후발 주자. <b>틴트 고객 연계 프로모션</b> 필요." } },
+    {
+      name: "제로 선크림 SPF50+", line: "Zero", cat: "선케어", emoji: "🌤️",
+      price: "15,000원", volume: "50ml",
+      ingredient: "화학자차, 판테놀", texture: "가벼운 무향 로션",
+      func: "자외선 차단 · 저자극", insight: { rate: "+29%", up: true,
+        text: "가성비 데일리 선크림으로 <b>재구매 주기 짧음</b>." } },
+  ],
+};
+
+/* ============================================================
+   STATE + RENDER
+   ============================================================ */
+/* 각 제품에 소속 브랜드 태그 부여 (전체 보기·워드마크·비교용) */
+Object.entries(DB).forEach(([brand, items]) => items.forEach(p => { p._brand = brand; }));
+
+let current = { brand: null, products: [], cat: "전체", line: "전체" };
+let compareSet = [];   // [{ key, brand, p }] — 브랜드를 넘나들며 유지됨
+let pendingBrand = ""; // 검색했지만 데이터가 없는 브랜드명 (입력 폼 프리필용)
+let editingRef = null; // 수정 중인 제품 객체 참조 (null이면 신규 추가 모드)
+
+const $ = (id) => document.getElementById(id);
+const grid = $("grid"), empty = $("empty"), filters = $("filters"), stats = $("stats");
+
+function searchBrand(name) {
+  const key = (name || "").trim().toLowerCase();
+  if (!key) { showAll(); return; }        // 입력 없음 → 전체 데이터
+  const products = DB[key];
+  if (!products) {
+    filters.classList.remove("show");
+    stats.classList.remove("show");
+    $("statsLine").innerHTML = "";
+    grid.innerHTML = "";
+    pendingBrand = (name || "").trim();
+    empty.innerHTML =
+      `해당 브랜드의 데이터를 찾을 수 없습니다.<br />` +
+      `"<b>${pendingBrand}</b>"에 대한 데이터를 업로드해보세요.` +
+      `<div class="empty-cta"><button class="add-data-btn" id="addDataBtn">+ 데이터 입력</button></div>`;
+    empty.classList.add("show");
+    $("addDataBtn").onclick = () => openAddModal(pendingBrand);
+    return;
+  }
+  empty.classList.remove("show");
+  current = { brand: key, products, cat: "전체", line: "전체" };
+  buildFilters();
+  render();
+}
+
+/* 브랜드 미선택 시: 보유한 모든 브랜드의 제품을 표시 */
+function showAll() {
+  empty.classList.remove("show");
+  current = { brand: null, products: Object.values(DB).flat(), cat: "전체", line: "전체" };
+  buildFilters();
+  render();
+}
+
+function uniq(arr) { return [...new Set(arr)]; }
+
+function buildFilters() {
+  const cats = ["전체", ...uniq(current.products.map(p => p.cat))];
+  const lines = ["전체", ...uniq(current.products.map(p => p.line))];
+  const catGroup = $("catGroup"), lineGroup = $("lineGroup");
+
+  catGroup.querySelectorAll(".chip").forEach(c => c.remove());
+  lineGroup.querySelectorAll(".chip").forEach(c => c.remove());
+
+  cats.forEach(c => {
+    const el = document.createElement("button");
+    el.className = "chip" + (c === current.cat ? " active" : "");
+    el.textContent = c;
+    el.onclick = () => { current.cat = c; syncChips(); render(); };
+    catGroup.appendChild(el);
+  });
+  lines.forEach(l => {
+    const el = document.createElement("button");
+    el.className = "chip" + (l === current.line ? " active" : "");
+    el.textContent = l;
+    el.onclick = () => { current.line = l; syncChips(); render(); };
+    lineGroup.appendChild(el);
+  });
+  filters.classList.add("show");
+}
+
+function syncChips() {
+  $("catGroup").querySelectorAll(".chip").forEach(c =>
+    c.classList.toggle("active", c.textContent === current.cat));
+  $("lineGroup").querySelectorAll(".chip").forEach(c =>
+    c.classList.toggle("active", c.textContent === current.line));
+}
+
+function filtered() {
+  return current.products.filter(p =>
+    (current.cat === "전체" || p.cat === current.cat) &&
+    (current.line === "전체" || p.line === current.line));
+}
+
+function renderStats(list) {
+  const total = list.length;
+  const catCount = uniq(list.map(p => p.cat)).length;
+  const lineCount = uniq(list.map(p => p.line)).length;
+  const rising = list.filter(p => p.insight.up).length;
+  stats.innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">제품 수</div></div>
+    <div class="stat"><div class="num">${catCount}</div><div class="lbl">카테고리</div></div>
+    <div class="stat"><div class="num">${lineCount}</div><div class="lbl">라인업</div></div>
+    <div class="stat"><div class="num gold">${rising}</div><div class="lbl">매출 성장 제품</div></div>`;
+  stats.classList.add("show");
+  $("statsLine").innerHTML =
+    `제품 <b>${total}</b> · 카테고리 <b>${catCount}</b> · 라인업 <b>${lineCount}</b> · 성장 <b class="gold-t">${rising}</b>`;
+}
+
+function render() {
+  const list = filtered();
+  renderStats(list);
+  grid.innerHTML = "";
+  list.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.setProperty("--cat", catColor(p.cat));
+    const mark = BRAND_MARK[p._brand];
+    const trendCls = p.insight.up ? "trend-up" : "trend-down";
+    const arrow = p.insight.up ? "▲" : "▼";
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="face front">
+          <div class="thumb${mark ? " has-mark" : ""}" style="background:${catGrad(p.cat)}">
+            <span class="badge-cat">${p.cat}</span>
+            ${mark ? `<div class="wordmark ${mark.cls}">
+              <img class="brand-logo" src="assets/logos/${p._brand}.png" alt="${p._brand}"
+                   onload="this.closest('.wordmark').classList.add('has-logo')" onerror="this.remove()" />
+              <span class="wm-text">${mark.html}</span>
+            </div>` : ""}
+            <span class="thumb-emoji">${p.emoji}</span>
+          </div>
+          <div class="info">
+            <div class="line">${p.line}</div>
+            <div class="name">${p.name}</div>
+            <div class="price">${p.price}</div>
+            <div class="flip-hint">↻ 카드를 클릭하면 상세정보</div>
+          </div>
+        </div>
+        <div class="face back">
+          <h3>${p.name}</h3>
+          <div class="sub">${p.line} · ${p.cat}</div>
+          <div class="spec"><span class="k">핵심성분</span><span class="v">${p.ingredient}</span></div>
+          <div class="spec"><span class="k">용량</span><span class="v">${p.volume}</span></div>
+          <div class="spec"><span class="k">가격</span><span class="v">${p.price}</span></div>
+          <div class="spec"><span class="k">제형</span><span class="v">${p.texture}</span></div>
+          <div class="spec"><span class="k">기능성</span><span class="v">${p.func}</span></div>
+          <div class="insight">
+            <span class="tag">매출 인사이트</span><br />
+            전년 대비 매출 <span class="${trendCls}">${arrow} ${p.insight.rate}</span><br />
+            ${p.insight.text}
+          </div>
+          ${p._custom ? `<div class="edit-actions">
+            <button class="edit-btn" type="button">수정</button>
+            <button class="del-btn" type="button">삭제</button>
+          </div>` : ""}
+        </div>
+      </div>`;
+    card.onclick = () => card.classList.toggle("flipped");
+
+    const key = p._brand + "|" + p.name;
+    const inSet = compareSet.some(c => c.key === key);
+    const cbtn = document.createElement("button");
+    cbtn.className = "compare-btn" + (inSet ? " on" : "");
+    cbtn.textContent = inSet ? "✓ 담김" : "+ 비교";
+    cbtn.onclick = (e) => { e.stopPropagation(); toggleCompare(p); };
+    card.appendChild(cbtn);
+
+    if (p._custom) {
+      const eb = card.querySelector(".edit-btn");
+      const db = card.querySelector(".del-btn");
+      if (eb) eb.onclick = (e) => { e.stopPropagation(); openEditModal(p); };
+      if (db) db.onclick = (e) => { e.stopPropagation(); deleteProduct(p); };
+    }
+
+    grid.appendChild(card);
+  });
+  renderCompareTray();
+}
+
+/* ============================================================
+   COMPARE MODE  (제품/브랜드 비교)
+   ============================================================ */
+const parsePrice = (s) => Number(String(s).replace(/[^0-9]/g, "")) || 0;
+const parseRate  = (s) => Number(String(s).replace(/[^0-9.\-]/g, "")) || 0;
+
+function toggleCompare(p) {
+  const key = p._brand + "|" + p.name;
+  const idx = compareSet.findIndex(c => c.key === key);
+  if (idx >= 0) {
+    compareSet.splice(idx, 1);
+  } else {
+    if (compareSet.length >= 4) { alert("한 번에 최대 4개까지 비교할 수 있어요."); return; }
+    compareSet.push({ key, brand: p._brand, p });
+  }
+  render();   // 카드 버튼 상태 + 트레이 갱신
+}
+
+function removeCompare(key) {
+  compareSet = compareSet.filter(c => c.key !== key);
+  render();
+}
+
+function renderCompareTray() {
+  const tray = $("tray");
+  if (!compareSet.length) { tray.classList.remove("show"); return; }
+  tray.classList.add("show");
+  $("trayChips").innerHTML = compareSet.map(c =>
+    `<span class="cchip">${c.p.emoji} ${c.brand.toUpperCase()} · ${c.p.name}<span class="x" data-key="${c.key}">×</span></span>`
+  ).join("");
+  $("trayChips").querySelectorAll(".x").forEach(x =>
+    x.onclick = () => removeCompare(x.dataset.key));
+  const go = $("cmpGo");
+  go.disabled = compareSet.length < 2;
+  go.textContent = `비교하기 (${compareSet.length})`;
+}
+
+function openCompare() {
+  const items = compareSet;
+  if (items.length < 2) return;
+  const prices = items.map(c => parsePrice(c.p.price));
+  const rates  = items.map(c => parseRate(c.p.insight.rate));
+  const minP = Math.min(...prices), maxR = Math.max(...rates);
+
+  const head = items.map(c =>
+    `<th class="cmp-prod-head" style="border-top:3px solid ${catColor(c.p.cat)}">
+       <div class="emoji">${c.p.emoji}</div>
+       <div class="bd">${c.brand.toUpperCase()}</div>
+       <div class="nm">${c.p.name}</div>
+     </th>`).join("");
+
+  const row = (k, fn) => `<tr><td class="rowkey">${k}</td>${items.map(fn).join("")}</tr>`;
+
+  $("cmpBody").innerHTML = `
+    <table class="cmp-table">
+      <thead><tr><th class="rowkey"></th>${head}</tr></thead>
+      <tbody>
+        ${row("카테고리", c => `<td>${c.p.cat}</td>`)}
+        ${row("라인업",   c => `<td>${c.p.line}</td>`)}
+        ${row("가격", (c, i) => `<td class="${prices[i] === minP ? "best" : ""}">${c.p.price}${prices[i] === minP ? ` <span class="badge">· 최저가</span>` : ""}</td>`)}
+        ${row("용량",     c => `<td>${c.p.volume}</td>`)}
+        ${row("핵심성분", c => `<td>${c.p.ingredient}</td>`)}
+        ${row("제형",     c => `<td>${c.p.texture}</td>`)}
+        ${row("기능성",   c => `<td>${c.p.func}</td>`)}
+        ${row("매출 증감", (c, i) => {
+          const up = c.p.insight.up, cls = up ? "trend-up" : "trend-down", arrow = up ? "▲" : "▼";
+          const best = rates[i] === maxR ? " best" : "";
+          return `<td class="${best.trim()}"><span class="${cls}">${arrow} ${c.p.insight.rate}</span>${rates[i] === maxR ? ` <span class="badge">· 최고성장</span>` : ""}</td>`;
+        })}
+        ${row("인사이트", c => `<td>${c.p.insight.text}</td>`)}
+      </tbody>
+    </table>`;
+  $("modal").classList.add("show");
+}
+
+/* ============================================================
+   DATA INPUT  (없는 브랜드 → 데이터 추가)
+   ============================================================ */
+function openAddModal(brand) {
+  const f = $("addForm");
+  f.reset();
+  editingRef = null;   // 신규 추가 모드
+  f.brand.value = brand || "";
+  $("catCustom").style.display = "none";   // 커스텀 입력칸 초기화
+  $("addTitle").textContent = brand ? `"${brand}" 데이터 입력` : "데이터 입력";
+  $("addModal").classList.add("show");
+  setTimeout(() => f.pname.focus(), 60);
+}
+
+/* 카테고리 '직접 입력하기' 선택 시 입력칸 노출 */
+$("catSelect").addEventListener("change", (e) => {
+  const custom = e.target.value === "__custom__";
+  const inp = $("catCustom");
+  inp.style.display = custom ? "block" : "none";
+  if (custom) inp.focus();
+});
+
+$("addForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const brandKey = f.brand.value.trim().toLowerCase();
+  const pname = f.pname.value.trim();
+  if (!brandKey || !pname) return;
+
+  let cat = f.cat.value;
+  if (cat === "__custom__") {
+    cat = f.catCustom.value.trim();
+    if (!cat) { f.catCustom.focus(); return; }
+  }
+
+  const rate = (f.rate.value.trim() || "+0%");
+  const prod = {
+    name: pname,
+    line: f.line.value.trim() || "기본",
+    cat: cat,
+    emoji: f.emoji.value.trim() || "🧴",
+    price: f.price.value.trim() || "-",
+    volume: f.volume.value.trim() || "-",
+    ingredient: f.ingredient.value.trim() || "-",
+    texture: f.texture.value.trim() || "-",
+    func: f.func.value.trim() || "-",
+    insight: { rate, up: !rate.startsWith("-"), text: f.text.value.trim() || "신규 등록 데이터." },
+    _brand: brandKey,
+    _custom: true,
+  };
+
+  if (editingRef) {   // 수정: 기존 항목 제거 후 재등록
+    const ob = editingRef._brand;
+    DB[ob] = (DB[ob] || []).filter(x => x !== editingRef);
+    if (DB[ob].length === 0) delete DB[ob];
+    compareSet = compareSet.filter(c => c.p !== editingRef);
+    editingRef = null;
+  }
+  if (!DB[brandKey]) DB[brandKey] = [];
+  DB[brandKey].push(prod);
+
+  $("addModal").classList.remove("show");
+  $("search").value = f.brand.value.trim();
+  searchBrand(brandKey);   // 추가/수정한 브랜드로 이동
+});
+
+/* 수정 모달 열기 (기존 값 프리필) */
+function openEditModal(p) {
+  const f = $("addForm");
+  f.reset();
+  editingRef = p;
+  f.brand.value = (p._brand || "").toUpperCase();
+  f.pname.value = p.name;
+  f.line.value = p.line;
+  f.price.value = p.price === "-" ? "" : p.price;
+  f.volume.value = p.volume === "-" ? "" : p.volume;
+  f.emoji.value = p.emoji || "";
+  f.rate.value = p.insight.rate;
+  f.ingredient.value = p.ingredient === "-" ? "" : p.ingredient;
+  f.texture.value = p.texture === "-" ? "" : p.texture;
+  f.func.value = p.func === "-" ? "" : p.func;
+  f.text.value = p.insight.text === "신규 등록 데이터." ? "" : p.insight.text;
+
+  const defaults = ["스킨케어", "메이크업", "클렌징", "선케어"];
+  if (defaults.includes(p.cat)) {
+    f.cat.value = p.cat;
+    $("catCustom").style.display = "none";
+  } else {
+    f.cat.value = "__custom__";
+    $("catCustom").style.display = "block";
+    f.catCustom.value = p.cat;
+  }
+  $("addTitle").textContent = `"${p.name}" 수정`;
+  $("addModal").classList.add("show");
+}
+
+/* 데이터 삭제 */
+function deleteProduct(p) {
+  if (!confirm(`"${p.name}" 데이터를 삭제할까요?`)) return;
+  const b = p._brand;
+  DB[b] = (DB[b] || []).filter(x => x !== p);
+  if (DB[b].length === 0) delete DB[b];
+  compareSet = compareSet.filter(c => c.p !== p);
+  if (current.brand && DB[current.brand]) searchBrand(current.brand);
+  else showAll();
+}
+
+$("addClose").onclick = () => $("addModal").classList.remove("show");
+$("addModal").onclick = (e) => { if (e.target.id === "addModal") $("addModal").classList.remove("show"); };
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+$("searchBtn").onclick = () => searchBrand($("search").value);
+$("search").addEventListener("keydown", e => { if (e.key === "Enter") searchBrand($("search").value); });
+
+$("cmpGo").onclick = openCompare;
+$("cmpClear").onclick = () => { compareSet = []; render(); };
+$("modalClose").onclick = () => $("modal").classList.remove("show");
+$("modal").onclick = (e) => { if (e.target.id === "modal") $("modal").classList.remove("show"); };
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    $("modal").classList.remove("show");
+    $("addModal").classList.remove("show");
+  }
+});
+document.querySelectorAll(".hint b").forEach(b =>
+  b.onclick = () => { $("search").value = b.dataset.brand; searchBrand(b.dataset.brand); });
+
+/* ============================================================
+   CURSOR-FOLLOWING NEON GLOW  (은은하게 지연되며 따라옴)
+   ============================================================ */
+(function () {
+  const glow = $("cursor-glow");
+  let tx = window.innerWidth / 2, ty = window.innerHeight / 2;  // target
+  let gx = tx, gy = ty;                                          // current (trailing)
+  let visible = false;
+
+  window.addEventListener("mousemove", (e) => {
+    tx = e.clientX; ty = e.clientY;
+    if (!visible) { visible = true; glow.style.opacity = "1"; }
+  });
+  window.addEventListener("mouseleave", () => { visible = false; glow.style.opacity = "0"; });
+
+  function tick() {
+    gx += (tx - gx) * 0.12;   // 낮을수록 더 은은하게 지연
+    gy += (ty - gy) * 0.12;
+    glow.style.transform = `translate(${gx - 150}px, ${gy - 150}px)`;
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* 첫 진입 시: 브랜드 미선택 → 전체 데이터 표시 */
+$("search").value = "";
+showAll();
+</script>
