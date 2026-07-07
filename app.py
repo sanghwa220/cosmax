@@ -31,21 +31,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 페이지 맨 위에 작은 안내 텍스트 표시 (Streamlit 상단 헤더에 가리지 않도록 여백 확보)
-st.markdown(
-    """
-    <div style="
-        font-size: 0.8rem;
-        letter-spacing: 0.08em;
-        color: #c9ced6;
-        padding: 3rem 0 0.5rem 1.25rem;
-    ">
-        코스맥스 전략마케팅 업무 툴
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
 # 같은 폴더의 index.html 파일을 읽어서 그대로 렌더링
 html_path = pathlib.Path(__file__).parent / "index.html"
 html_content = html_path.read_text(encoding="utf-8")
