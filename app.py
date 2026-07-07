@@ -31,14 +31,14 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 페이지 맨 위에 작은 안내 텍스트 표시
+# 페이지 맨 위에 작은 안내 텍스트 표시 (Streamlit 상단 헤더에 가리지 않도록 여백 확보)
 st.markdown(
     """
     <div style="
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         letter-spacing: 0.08em;
-        color: #9aa0aa;
-        padding: 0.5rem 0 0.25rem 1rem;
+        color: #c9ced6;
+        padding: 3rem 0 0.5rem 1.25rem;
     ">
         코스맥스 전략마케팅 업무 툴
     </div>
